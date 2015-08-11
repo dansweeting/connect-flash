@@ -14,10 +14,16 @@ function MockRequestWithoutSession() {
 function MockResponse() {
 }
 
+function MockRequestWithCookies() {
+  this.cookies = {};
+}
+
+function MockResponseWithCookies() {
+}
 
 vows.describe('flash').addBatch({
 
-  'middleware': {
+  'middleware with defaults': {
     topic: function() {
       return flash();
     },
@@ -204,6 +210,109 @@ vows.describe('flash').addBatch({
         assert.lengthOf(req.session.flash['info'], 1);
       },
     },
+  },
+
+  'middleware with no-session': {
+    topic: function() {
+      return flash({"no-session": true});
+    },
+
+    'when handling a request': {
+      topic: function(flash) {
+        var self = this;
+        var req = new MockRequestWithCookies();
+        var res = new MockResponseWithCookies();
+
+        function next(err) {
+          self.callback(err, req, res);
+        }
+        process.nextTick(function () {
+          flash(req, res, next)
+        });
+      },
+
+      'should not error' : function(err, req, res) {
+        assert.isNull(err);
+      },
+      'should add a flash function' : function(err, req, res) {
+        assert.isFunction(req.flash);
+      },
+      'should set flash message' : function(err, req, res) {
+        var count = req.flash('error', 'Something went wrong');
+        assert.equal(count, 1);
+        assert.lengthOf(Object.keys(req.cookies.flash), 1);
+        assert.lengthOf(req.cookies.flash['error'], 1);
+      },
+      'should get and clear previously set flash message' : function(err, req, res) {
+        var msgs = req.flash('error');
+        assert.lengthOf(msgs, 1);
+        assert.equal(msgs[0], 'Something went wrong');
+        assert.lengthOf(Object.keys(req.cookies.flash), 0);
+      },
+      'should set multiple flash messages' : function(err, req, res) {
+        req.flash('info', 'Welcome');
+        var count = req.flash('info', 'Check out this great new feature');
+        assert.equal(count, 2);
+        assert.lengthOf(Object.keys(req.cookies.flash), 1);
+        assert.lengthOf(req.cookies.flash['info'], 2);
+      },
+      'should set flash messages in one call' : function(err, req, res) {
+        var count = req.flash('warning', ['username required', 'password required']);
+        assert.equal(count, 2);
+        var msgs = req.flash('warning');
+        assert.lengthOf(msgs, 2);
+        assert.equal(msgs[0], 'username required');
+        assert.equal(msgs[1], 'password required');
+      },
+      'should get and clear multiple previously set flash messages' : function(err, req, res) {
+        var msgs = req.flash('info');
+        assert.lengthOf(msgs, 2);
+        assert.equal(msgs[0], 'Welcome');
+        assert.equal(msgs[1], 'Check out this great new feature');
+        assert.lengthOf(Object.keys(req.cookies.flash), 0);
+      },
+      'should set flash messages of multiple types' : function(err, req, res) {
+        req.flash('info', 'Welcome back');
+        req.flash('notice', 'Last login was yesterday');
+        assert.lengthOf(Object.keys(req.cookies.flash), 2);
+        assert.lengthOf(req.cookies.flash['info'], 1);
+        assert.lengthOf(req.cookies.flash['notice'], 1);
+      },
+      'should independently get and clear messages of multiple types' : function(err, req, res) {
+        var msgs = req.flash('info');
+        assert.lengthOf(msgs, 1);
+        assert.equal(msgs[0], 'Welcome back');
+        assert.lengthOf(Object.keys(req.cookies.flash), 1);
+        msgs = req.flash('notice');
+        assert.lengthOf(msgs, 1);
+        assert.equal(msgs[0], 'Last login was yesterday');
+      },
+      'should return all messages' : function(err, req, res) {
+        req.flash('error', 'Database is down');
+        req.flash('error', 'Message queue is down');
+        req.flash('notice', 'Things are looking bleak');
+        var msgs = req.flash();
+        assert.lengthOf(Object.keys(msgs), 2);
+        assert.lengthOf(msgs['error'], 2);
+        assert.lengthOf(msgs['notice'], 1);
+        assert.lengthOf(Object.keys(req.cookies.flash), 0);
+      },
+      'should format messages' : function(err, req, res) {
+        if (util.format) {
+          req.flash('info', 'Hello %s', 'Jared');
+          var msg = req.flash('info')[0];
+          assert.equal(msg, 'Hello Jared')
+
+          req.flash('info', 'Hello %s %s', 'Jared', 'Hanson');
+          var msg = req.flash('info')[0];
+          assert.equal(msg, 'Hello Jared Hanson')
+        }
+      },
+      'should return empty array for flash type with no messages' : function(err, req, res) {
+        var msgs = req.flash('what');
+        assert.lengthOf(msgs, 0);
+      }
+    }
   },
 
 }).export(module);
