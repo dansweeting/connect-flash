@@ -226,6 +226,6 @@ vows.describe('flash').addBatch({
         assert.lengthOf(req.session.flash['info'], 1);
       },
     },
-  },
+  }
 
 }).export(module);
