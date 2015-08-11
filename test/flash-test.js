@@ -53,6 +53,7 @@ vows.describe('flash').addBatch({
         assert.equal(count, 1);
         assert.lengthOf(Object.keys(req.session.flash), 1);
         assert.lengthOf(req.session.flash['error'], 1);
+        assert.equal(req.session.flash['error'],'Something went wrong');
       },
       'should get and clear previously set flash message' : function(err, req, res) {
         var msgs = req.flash('error');
@@ -113,7 +114,7 @@ vows.describe('flash').addBatch({
           req.flash('info', 'Hello %s', 'Jared');
           var msg = req.flash('info')[0];
           assert.equal(msg, 'Hello Jared')
-        
+
           req.flash('info', 'Hello %s %s', 'Jared', 'Hanson');
           var msg = req.flash('info')[0];
           assert.equal(msg, 'Hello Jared Hanson')
@@ -133,7 +134,7 @@ vows.describe('flash').addBatch({
           this.session.flash = 'I Exist'
         }
         var res = new MockResponse();
-        
+
         function next(err) {
           self.callback(err, req, res);
         }
@@ -141,7 +142,7 @@ vows.describe('flash').addBatch({
           flash(req, res, next)
         });
       },
-      
+
       'should not error' : function(err, req, res) {
         assert.isNull(err);
       },
@@ -156,7 +157,7 @@ vows.describe('flash').addBatch({
         var self = this;
         var req = new MockRequestWithoutSession();
         var res = new MockResponse();
-        
+
         function next(err) {
           self.callback(err, req, res);
         }
@@ -164,7 +165,7 @@ vows.describe('flash').addBatch({
           flash(req, res, next)
         });
       },
-      
+
       'should not error' : function(err, req, res) {
         assert.isNull(err);
       },
@@ -192,7 +193,7 @@ vows.describe('flash').addBatch({
           this.session.flash = 'I Exist'
         }
         var res = new MockResponse();
-        
+
         function next(err) {
           self.callback(err, req, res);
         }
@@ -200,7 +201,7 @@ vows.describe('flash').addBatch({
           flash(req, res, next)
         });
       },
-      
+
       'should not error' : function(err, req, res) {
         assert.isNull(err);
       },
